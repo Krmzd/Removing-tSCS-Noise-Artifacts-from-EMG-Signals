@@ -44,8 +44,8 @@ if __name__ == "__main__":
     participants_name = {"NS":{"BB_tSCS_before_BLT", "TB_tSCS_before_BLT", "AD_PD_tSCS_before_BLT", "BB_tSCS_after_BLT", "TB_tSCS_after_BLT", "AD_PD_tSCS_after_BLT"},
                         "MY":{"BB_tSCS_before_BLT", "TB_tSCS_before_BLT", "AD_PD_tSCS_before_BLT", "BB_tSCS_after_BLT", "TB_tSCS_after_BLT", "AD_PD_tSCS_after_BLT"}}   
     
-    file_dir = "D:/University/Cutaneous_reflex_final/U-net CNN/data"
-    output_dir = "D:/University/Cutaneous_reflex_final/U-net CNN/validation_results"    
+    file_dir = Raw_data_path
+    output_dir = Validation_results_path    
     muscle_names = ["1 L BB", "2 L TB", "3 L AD", "4 L PD", "5 R BB", "", "6 R TB", "7 R AD", "8 L PD"]
     # 1. Configuration
     for participant in participants_name:

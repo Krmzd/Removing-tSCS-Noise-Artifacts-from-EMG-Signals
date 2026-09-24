@@ -186,8 +186,9 @@ def get_loader(processed_path, train_participants, val_participants, batch_size=
 
     return train_loader, val_loader
 # if __name__ == "__main__":
-#     raw = "D:/University/Cutaneous_reflex_final/U-net CNN/data"
-#     processed = "D:/University/Cutaneous_reflex_final/U-net CNN/processed_data"
+#     from config import Raw_data_path, Processed_data_path
+#     raw = Raw_data_path
+#     processed = Processed_data_path
 #     pre_process_batched(raw, processed)
  
 # def check_pt_file(file_path):

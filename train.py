@@ -8,8 +8,10 @@ from visualization import EMGVisualizer
 from model import AttentionUNet1D
 from data_loader import get_loader
 from loss import ScaledLoss, get_huber_loss
+from config import Device, Processed_data_path, Model_path
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = Device
+print("Using device:", device)
 epochs = 100
 batch_size = 32
 learning_rate = 1e-4
@@ -21,7 +23,7 @@ def train_denoiser():
     # clean_target: (Original Clean Recording)
     train_parts = ["AA", "DA", "KM", "MJ", "MT", "NM", "Reihane", "SA", "SH", "Shubhman", "TS", "VI", "VIm", "YK"] 
     val_parts = ["NS", "MY"] 
-    train_loader, val_loader = get_loader("D:/University/Cutaneous_reflex_final/U-net CNN/processed_data", train_parts, val_parts, batch_size=batch_size)
+    train_loader, val_loader = get_loader(Processed_data_path, train_parts, val_parts, batch_size=batch_size)
 
     model = AttentionUNet1D(n_channels=1, n_classes=1).to(device)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -76,7 +78,7 @@ def train_denoiser():
 
       
         if avg_val_loss == min(val_losses):
-            torch.save(model.state_dict(), "unet_denoiser.pth")
+            torch.save(model.state_dict(), Model_path)
 
     viz_learning_curve = EMGVisualizer()
     viz_learning_curve.plot_learning_curve(train_losses, val_losses)
