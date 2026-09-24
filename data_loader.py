@@ -12,8 +12,8 @@ from process import Process
 class EMGdataset(Dataset):
     def __init__(self, processed_path, participants):
 
-        self.all_noisy = []
-        self.all_clean = []
+        noisy_list = []
+        clean_list = []
 
         print(f"Loading data for participants: {participants}")
 
@@ -40,11 +40,11 @@ class EMGdataset(Dataset):
                     raise ValueError(f"Shape mismatch in {f}")
 
 
-                self.all_noisy.append(n_batch)
-                self.all_clean.append(c_batch)
+                noisy_list.append(n_batch)
+                clean_list.append(c_batch)
 
-        self.all_noisy = torch.cat(self.all_noisy, dim=0)
-        self.all_clean = torch.cat(self.all_clean, dim=0)
+        self.all_noisy = torch.cat(noisy_list, dim=0)
+        self.all_clean = torch.cat(clean_list, dim=0)
 
         print("Final dataset shape:", self.all_noisy.shape)
 
