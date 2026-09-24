@@ -6,10 +6,11 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from model import AttentionUNet1D
 from visualization import EMGVisualizer
+from config import Device, Raw_data_path, Cleaned_data_path, Model_path
 
 # config
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model_path = "unet_denoiser.pth"
+device = Device
+model_path = Model_path
 window_size = 400
 step_size = 200  # We use 50% overlap to make the signal smoother
 
@@ -70,9 +71,9 @@ if __name__ == "__main__":
     participants_name = {"JK":{"BB_tSCS_before_BLT", "TB_tSCS_before_BLT", "AD_PD_tSCS_before_BLT", "BB_tSCS_after_BLT", "TB_tSCS_after_BLT", "AD_PD_tSCS_after_BLT"},
                         "kevyn":{"BB_tSCS_before_BLT", "TB_tSCS_before_BLT", "AD_PD_tSCS_before_BLT", "BB_tSCS_after_BLT", "TB_tSCS_after_BLT", "AD_PD_tSCS_after_BLT"}}   
     
-    file_dir = "D:/University/Cutaneous_reflex_final/U-net CNN/data"
-    output_base = "D:/University/Cutaneous_reflex_final/U-net CNN/cleaned_data"
-    muscle_names = ["1 L BB", "2 L TB", "3 L AD", "4 L PD", "5 R BB", "", "6 R TB", "7 R AD", "8 L PD"]
+    file_dir = Raw_data_path
+    output_base = Cleaned_data_path
+    muscle_names = ["1 L BB", "2 L TB", "3 L AD", "4 L PD", "5 R BB", "6 R TB", "7 R AD", "8 L PD"]
     
     # 1. Configuration
     for participant in participants_name:

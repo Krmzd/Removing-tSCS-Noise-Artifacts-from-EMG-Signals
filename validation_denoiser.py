@@ -4,7 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from test_denoiser import run_inference  
 from process import Process       
-from visualization import EMGVisualizer 
+from visualization import EMGVisualizer
+from config import Raw_data_path, Validation_results_path
 
 viz_valid = EMGVisualizer(fs=2000)
 
