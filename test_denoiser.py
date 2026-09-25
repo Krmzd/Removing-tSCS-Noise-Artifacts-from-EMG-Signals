@@ -14,6 +14,10 @@ model_path = Model_path
 window_size = 400
 step_size = 200  # We use 50% overlap to make the signal smoother
 
+# Only these will be plotted (use [] for no plots at all)
+plot_muscles = ["1 L BB"]
+plot_conditions = ["BB_tSCS_before_BLT"]
+
 def run_inference(csv_path, muscle_col):
     # 1. Load the train model
     model = AttentionUNet1D(n_channels=1, n_classes=1).to(device)
@@ -124,8 +128,9 @@ if __name__ == "__main__":
                     # plt.tight_layout()
                     # plt.show() # Close the plot window to continue to the next muscle
 
-                plotting_tool = EMGVisualizer()
-                raw_clean_viz = plotting_tool.plot_inference_check(raw=raw, cleaned=cleaned, muscle_name=muscle)
+                if muscle in plot_muscles and condition in plot_conditions:
+                    plotting_tool = EMGVisualizer()
+                    plotting_tool.plot_inference_check(raw=raw, cleaned=cleaned, muscle_name=muscle)
                 
 
 

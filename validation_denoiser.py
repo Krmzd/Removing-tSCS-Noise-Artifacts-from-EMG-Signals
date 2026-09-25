@@ -9,7 +9,11 @@ from config import Raw_data_path, Validation_results_path
 
 viz_valid = EMGVisualizer(fs=2000)
 
-def validation_result(noisy_file, clean_file, muscle):
+# Only these will be plotted (use [] for no plots at all)
+plot_muscles = ["1 L BB"]
+plot_conditions = ["BB_tSCS_before_BLT"]
+
+def validation_result(noisy_file, clean_file, muscle, make_plots=False):
     
     """
     This function handles the COMPARISON.
@@ -30,11 +34,11 @@ def validation_result(noisy_file, clean_file, muscle):
     y_pred = cleaned[:min_len]
     y_true = truth_data[:min_len]
 
-    print("  Generating Residual and Distribution plots...")
-    # plot
-    viz_valid.plot_inference_check(raw=raw, cleaned=cleaned, muscle_name=muscle)
-    viz_valid.plot_residual(target_sig=y_true, pred_sig=y_pred)
-    viz_valid.plot_error_distribution(target=y_true, pred=y_pred)
+    if make_plots:
+        print("  Generating plots...")
+        viz_valid.plot_inference_check(raw=raw, cleaned=cleaned, muscle_name=muscle)
+        viz_valid.plot_residual(target_sig=y_true, pred_sig=y_pred)
+        viz_valid.plot_error_distribution(target=y_true, pred=y_pred)
     
     return cleaned
 
@@ -78,7 +82,8 @@ if __name__ == "__main__":
             for muscle in muscle_names:
                 if muscle in df_orig.columns:
                 
-                    cleaned_data = validation_result(noisy_path, clean_path, muscle)
+                    make_plots = muscle in plot_muscles and condition in plot_conditions
+                    cleaned_data = validation_result(noisy_path, clean_path, muscle, make_plots)
                             
                     cleaned_only_results[muscle] = cleaned_data
           

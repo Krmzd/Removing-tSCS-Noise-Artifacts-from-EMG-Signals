@@ -34,6 +34,11 @@ def train_denoiser():
 
     train_losses, val_losses = [], []
 
+    # Early stopping
+    patience = 10          # stop after 10 epochs with no improvement
+    best_val = float("inf")
+    epochs_no_improve = 0
+
     for epoch in range(epochs):
         model.train()
         running_train_loss = 0.0
@@ -77,8 +82,15 @@ def train_denoiser():
         print(f"Epoch {epoch+1}: Train Loss: {avg_train_loss:.6f} | Val Loss: {avg_val_loss:.6f}")
 
       
-        if avg_val_loss == min(val_losses):
+        if avg_val_loss < best_val:
+            best_val = avg_val_loss
+            epochs_no_improve = 0
             torch.save(model.state_dict(), Model_path)
+        else:
+            epochs_no_improve += 1
+            if epochs_no_improve >= patience:
+                print(f"Early stopping at epoch {epoch+1}")
+                break
 
     viz_learning_curve = EMGVisualizer()
     viz_learning_curve.plot_learning_curve(train_losses, val_losses)
