@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from model import AttentionUNet1D
 from visualization import EMGVisualizer
 from config import Device, Raw_data_path, Cleaned_data_path, Model_path
+from loss import real_metrics
 
 # config
 device = Device
@@ -77,8 +78,13 @@ if __name__ == "__main__":
     
     file_dir = Raw_data_path
     output_base = Cleaned_data_path
-    muscle_names = ["1 L BB", "2 L TB", "3 L AD", "4 L PD", "5 R BB", "6 R TB", "7 R AD", "8 L PD"]
+    muscle_names = ["1 L BB", "2 L TB", "3 L AD", "4 L PD", "5 R BB", "6 R TB", "7 R AD", "8 R PD"]
     
+    # Part 2 metrics: spike settings as in preprocessing (h_mult, pre_w, post_w)
+    metric_rows = []
+    settings = {"BB": (3.0, 10, 25), "TB": (3.0, 10, 25),
+                "AD": (8.0, 15, 40), "PD": (8.0, 15, 40)}
+
     # 1. Configuration
     for participant in participants_name:
         
@@ -111,6 +117,14 @@ if __name__ == "__main__":
                     # Store the result for the final CSV
                 cleaned_only_results[muscle] = cleaned
 
+                # Real tSCS metrics (only for the muscle this condition targets)
+                code = muscle.split()[-1]          # "BB", "TB", "AD", "PD"
+                if code in condition:
+                    h, pre, post = settings[code]
+                    result = real_metrics(raw, cleaned, h, pre, post)
+                    result.update(participant=participant, condition=condition, muscle=muscle)
+                    metric_rows.append(result)
+
                     # 3. VISUALIZATION (Optional: shows a plot for every muscle processed)
                     # plt.figure(figsize=(12, 6))
                     # plt.subplot(2, 1, 1)
@@ -140,3 +154,8 @@ if __name__ == "__main__":
                 output_name = os.path.join(part_out_dir, f"{condition}_CLEANED.csv")
                 final_df.to_csv(output_name, index=False)
                 print(f"Saved: {output_name}")
+
+    # Save Part 2 metrics
+    metrics_df = pd.DataFrame(metric_rows)
+    print(metrics_df.round(4).to_string())
+    metrics_df.to_csv(os.path.join(output_base, "real_metrics.csv"), index=False)

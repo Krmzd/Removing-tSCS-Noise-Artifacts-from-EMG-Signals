@@ -6,6 +6,12 @@ from test_denoiser import run_inference
 from process import Process       
 from visualization import EMGVisualizer
 from config import Raw_data_path, Validation_results_path
+import torch
+from torch.utils.data import DataLoader
+from config import Device, Processed_data_path, Model_path
+from data_loader import EMGdataset
+from model import AttentionUNet1D
+from loss import synthetic_metrics
 
 viz_valid = EMGVisualizer(fs=2000)
 
@@ -44,14 +50,45 @@ def validation_result(noisy_file, clean_file, muscle, make_plots=False):
 
                 
 
+def synthetic_evaluation(participants):
+    """Part 1: metrics on synthetic .pt data, where the true clean signal is known."""
+    model = AttentionUNet1D(n_channels=1, n_classes=1).to(Device)
+    model.load_state_dict(torch.load(Model_path, map_location=Device))
+    model.eval()
+
+    rows = []
+    for p in participants:
+        loader = DataLoader(EMGdataset(Processed_data_path, [p]), batch_size=256, shuffle=False)
+        noisy_all, clean_all, pred_all = [], [], []
+        with torch.no_grad():
+            for noisy, clean in loader:
+                pred_all.append(model(noisy.to(Device)).cpu())
+                noisy_all.append(noisy)
+                clean_all.append(clean)
+
+        result = synthetic_metrics(torch.cat(clean_all).numpy().ravel(),
+                                   torch.cat(noisy_all).numpy().ravel(),
+                                   torch.cat(pred_all).numpy().ravel())
+        result["participant"] = p
+        rows.append(result)
+
+    df = pd.DataFrame(rows).set_index("participant")
+    print(df.round(4).T)
+    os.makedirs(Validation_results_path, exist_ok=True)
+    df.to_csv(os.path.join(Validation_results_path, "synthetic_metrics.csv"))
+
+
 if __name__ == "__main__":
+
+    # Part 1: synthetic metrics. NS, MY = validation set, YK = never seen in training
+    synthetic_evaluation(["NS", "MY", "YK"])
 
     participants_name = {"NS":{"BB_tSCS_before_BLT", "TB_tSCS_before_BLT", "AD_PD_tSCS_before_BLT", "BB_tSCS_after_BLT", "TB_tSCS_after_BLT", "AD_PD_tSCS_after_BLT"},
                         "MY":{"BB_tSCS_before_BLT", "TB_tSCS_before_BLT", "AD_PD_tSCS_before_BLT", "BB_tSCS_after_BLT", "TB_tSCS_after_BLT", "AD_PD_tSCS_after_BLT"}}   
     
     file_dir = Raw_data_path
     output_dir = Validation_results_path    
-    muscle_names = ["1 L BB", "2 L TB", "3 L AD", "4 L PD", "5 R BB", "", "6 R TB", "7 R AD", "8 L PD"]
+    muscle_names = ["1 L BB", "2 L TB", "3 L AD", "4 L PD", "5 R BB", "6 R TB", "7 R AD", "8 R PD"]
     # 1. Configuration
     for participant in participants_name:
 

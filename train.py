@@ -18,10 +18,22 @@ learning_rate = 1e-4
 reflex_sensitivity = 500.0  
 viz = EMGVisualizer()
 
+def evaluate(model, loader, criterion):
+    """Average loss over a loader, in eval mode (no training, no gradients)."""
+    model.eval()
+    total = 0.0
+    with torch.no_grad():
+        for synthetic_noisy, clean_target in loader:
+            synthetic_noisy = synthetic_noisy.to(device)
+            clean_target = clean_target.to(device)
+            total += criterion(model(synthetic_noisy), clean_target).item()
+    return total / len(loader)
+
+
 def train_denoiser():
     # noisy_input: (Clean Recording + Added Spikes)
     # clean_target: (Original Clean Recording)
-    train_parts = ["AA", "DA", "KM", "MJ", "MT", "NM", "Reihane", "SA", "SH", "Shubhman", "TS", "VI", "VIm", "YK"] 
+    train_parts = ["AA", "DA", "KM", "MJ", "MT", "NM", "Reihane", "SA", "SH", "Shubhman", "TS", "VI", "VIm"]  # YK held out as unseen test participant
     val_parts = ["NS", "MY"] 
     train_loader, val_loader = get_loader(Processed_data_path, train_parts, val_parts, batch_size=batch_size)
 
@@ -41,7 +53,6 @@ def train_denoiser():
 
     for epoch in range(epochs):
         model.train()
-        running_train_loss = 0.0
         
         loop = tqdm(train_loader, leave=True)
         for synthetic_noisy, clean_target in loop:
@@ -58,25 +69,13 @@ def train_denoiser():
             loss.backward()
             optimizer.step()
 
-            running_train_loss += loss.item()
             loop.set_description(f"Epoch [{epoch+1}/{epochs}]")
             loop.set_postfix(loss=loss.item())
 
-        avg_train_loss = running_train_loss / len(train_loader)
+        # Measure train and validation loss the same way: end of epoch, eval mode
+        avg_train_loss = evaluate(model, train_loader, criterion)
+        avg_val_loss = evaluate(model, val_loader, criterion)
         train_losses.append(avg_train_loss)
-
-        # Validation
-        model.eval()
-        running_val_loss = 0.0
-        with torch.no_grad():
-            for synthetic_noisy, clean_target in val_loader:
-                synthetic_noisy = synthetic_noisy.to(device)
-                clean_target = clean_target.to(device)
-                prediction = model(synthetic_noisy)
-                loss = criterion(prediction, clean_target)
-                running_val_loss += loss.item()
-
-        avg_val_loss = running_val_loss / len(val_loader)
         val_losses.append(avg_val_loss)
         
         print(f"Epoch {epoch+1}: Train Loss: {avg_train_loss:.6f} | Val Loss: {avg_val_loss:.6f}")
