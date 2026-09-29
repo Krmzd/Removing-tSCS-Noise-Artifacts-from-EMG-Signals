@@ -1,9 +1,6 @@
 import os
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 from test_denoiser import run_inference  
-from process import Process       
 from visualization import EMGVisualizer
 from config import Raw_data_path, Validation_results_path
 import torch
@@ -19,32 +16,17 @@ viz_valid = EMGVisualizer(fs=2000)
 plot_muscles = ["1 L BB"]
 plot_conditions = ["BB_tSCS_before_BLT"]
 
-def validation_result(noisy_file, clean_file, muscle, make_plots=False):
-    
-    """
-    This function handles the COMPARISON.
-    It takes the Noisy file (to clean) and the Clean file (as the Truth).
-    """
+def validation_result(noisy_file, muscle, make_plots=False):
+    """Cleans one muscle of a real tSCS recording and (optionally) plots the result."""
 
     print("Step 1: Running U-Net Denoising...")
 
-    raw, cleaned = run_inference(noisy_file , muscle)
-
-
-    df_truth = pd.read_csv(clean_file)
-    truth_data = df_truth[muscle].fillna(0).values
-    truth_data = truth_data - np.mean(truth_data) 
-
-    # Align lengths because recordings have different sizes
-    min_len = min(len(cleaned), len(truth_data))
-    y_pred = cleaned[:min_len]
-    y_true = truth_data[:min_len]
+    raw, cleaned = run_inference(noisy_file, muscle)
 
     if make_plots:
         print("  Generating plots...")
         viz_valid.plot_inference_check(raw=raw, cleaned=cleaned, muscle_name=muscle)
-        viz_valid.plot_residual(target_sig=y_true, pred_sig=y_pred)
-        viz_valid.plot_error_distribution(target=y_true, pred=y_pred)
+        viz_valid.plot_residual(raw=raw, cleaned=cleaned)
     
     return cleaned
 
@@ -99,14 +81,11 @@ if __name__ == "__main__":
         condition_name = participants_name[participant]
         
         for condition in condition_name:
-
+            
             noisy_path = f"{file_dir}/{participant}/{condition}.CSV"
-            # find the corresponding clean file (no tSCS)
-            clean_path = noisy_path.replace("tSCS", "no_tSCS")
 
-            if os.path.exists(noisy_path) and os.path.exists(clean_path):
-                print(f"\nProcessing: {participant} | {condition}")
-
+            # correct initialization of an empty dictionary
+            cleaned_only_results = {}
             # correct initialization of an empty dictionary
             cleaned_only_results = {}
 
@@ -120,7 +99,7 @@ if __name__ == "__main__":
                 if muscle in df_orig.columns:
                 
                     make_plots = muscle in plot_muscles and condition in plot_conditions
-                    cleaned_data = validation_result(noisy_path, clean_path, muscle, make_plots)
+                    cleaned_data = validation_result(noisy_path, muscle, make_plots)
                             
                     cleaned_only_results[muscle] = cleaned_data
           

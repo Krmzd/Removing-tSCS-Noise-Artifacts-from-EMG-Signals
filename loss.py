@@ -7,17 +7,6 @@ from scipy.signal import find_peaks
 def get_huber_loss(beta=0.1):
     return nn.SmoothL1Loss(beta=beta)
 
-# Log-Cosh Loss
-class LogCoshLoss(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, y_pred, y_true):
-        # log(cosh(x)) can be simplified for numerical stability:
-        # log((exp(x) + exp(-x))/2)
-        err = y_pred - y_true
-        return torch.mean(torch.log(torch.cosh(err + 1e-12)))
-
 # Weighted Loss 
 class ScaledLoss(nn.Module):
     def __init__(self, base_loss_fn, scale=100.0):
@@ -29,7 +18,7 @@ class ScaledLoss(nn.Module):
         return self.loss_fn(y_pred, y_true) * self.scale
 
 
-# ================= Evaluation metrics =================
+# Evaluation metrics 
 
 def rmse(a, b):
     return float(np.sqrt(np.mean((a - b) ** 2)))
@@ -53,8 +42,6 @@ def synthetic_metrics(clean, noisy, pred):
         "RMSE_output": rmse(clean, pred),
         "Corr_output": corr(clean, pred),
         "SNR_improvement_dB": snr_db(clean, pred) - snr_db(clean, noisy),
-        "RMSE_artifact_before": rmse(clean[mask], noisy[mask]),
-        "RMSE_artifact_after": rmse(clean[mask], pred[mask]),
         "RMSE_clean_parts": rmse(clean[~mask], pred[~mask]),   # ideal = 0
     }
 
@@ -67,7 +54,6 @@ def real_metrics(raw, cleaned, h_mult, pre_w, post_w, tail_len=20000, edge=400, 
     # Find tSCS spikes the same way as in preprocessing
     thresh = np.std(raw_c[-tail_len:]) * h_mult
     peaks_before, _ = find_peaks(np.abs(raw_c), height=thresh, distance=distance)
-    peaks_after, _ = find_peaks(np.abs(clean_c), height=thresh, distance=distance)
 
     # How much smaller is each spike after cleaning?
     ratios = []
@@ -80,8 +66,6 @@ def real_metrics(raw, cleaned, h_mult, pre_w, post_w, tail_len=20000, edge=400, 
 
     # Clean tail: raw is already clean here, so cleaned should match it
     return {
-        "Spikes_before": len(peaks_before),
-        "Spikes_after": len(peaks_after),
         "Peak_reduction_dB": 20 * np.log10(ratio) if ratio > 0 else float("nan"),
         "Tail_RMSE": rmse(raw_c[-tail_len:], clean_c[-tail_len:]),
         "Tail_Corr": corr(raw_c[-tail_len:], clean_c[-tail_len:]),

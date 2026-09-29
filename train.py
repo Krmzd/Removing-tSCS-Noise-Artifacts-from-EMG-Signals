@@ -1,9 +1,6 @@
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader
 from tqdm import tqdm
-import matplotlib.pyplot as plt
-import os
 from visualization import EMGVisualizer
 from model import AttentionUNet1D
 from data_loader import get_loader
@@ -16,7 +13,6 @@ epochs = 100
 batch_size = 32
 learning_rate = 1e-4
 reflex_sensitivity = 500.0  
-viz = EMGVisualizer()
 
 def evaluate(model, loader, criterion):
     """Average loss over a loader, in eval mode (no training, no gradients)."""
@@ -33,7 +29,7 @@ def evaluate(model, loader, criterion):
 def train_denoiser():
     # noisy_input: (Clean Recording + Added Spikes)
     # clean_target: (Original Clean Recording)
-    train_parts = ["AA", "DA", "KM", "MJ", "MT", "NM", "Reihane", "SA", "SH", "Shubhman", "TS", "VI", "VIm"]  # YK held out as unseen test participant
+    train_parts = ["AA", "DA", "KM", "JK", "MT", "NM", "Re", "SA", "SH", "Shn", "TS", "VI", "VIm"]  # YK held out as unseen test participant
     val_parts = ["NS", "MY"] 
     train_loader, val_loader = get_loader(Processed_data_path, train_parts, val_parts, batch_size=batch_size)
 

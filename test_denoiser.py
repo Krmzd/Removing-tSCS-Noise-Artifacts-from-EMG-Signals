@@ -2,8 +2,6 @@ import torch
 import numpy as np
 import pandas as pd
 import os
-from tqdm import tqdm
-import matplotlib.pyplot as plt
 from model import AttentionUNet1D
 from visualization import EMGVisualizer
 from config import Device, Raw_data_path, Cleaned_data_path, Model_path
@@ -36,7 +34,7 @@ def run_inference(csv_path, muscle_col):
     scale_factor = np.max(np.abs(centered))
     normalized_signal = centered / scale_factor
 
-    # 3. SLIDING WINDOW RECONSTRUCTION
+    # Sliding window reconstruction
     # We create a buffer to hold the cleaned signal
     output_buffer = np.zeros_like(normalized_signal)
     count_mask = np.zeros_like(normalized_signal) # To average the overlapping parts
@@ -45,14 +43,17 @@ def run_inference(csv_path, muscle_col):
     
     with torch.no_grad():
         # Loop through the signal with a sliding window
-        for start in range(0, len(normalized_signal) - window_size, step_size):
+        starts = list(range(0, len(normalized_signal) - window_size + 1, step_size))
+        if starts[-1] != len(normalized_signal) - window_size:
+            starts.append(len(normalized_signal) - window_size)   # last piece ends exactly at the end
+        for start in starts:
             end = start + window_size
             
             # Prepare window for U-Net [Batch, Channel, Length]
             window_tensor = torch.tensor(normalized_signal[start:end]).float()
             window_tensor = window_tensor.unsqueeze(0).unsqueeze(0).to(device)
             
-            # THE MODEL PREDICTS THE CLEAN EMG
+            # The model predicts the clean EMG
             prediction = model(window_tensor)
             
             # Convert back to numpy
@@ -65,7 +66,7 @@ def run_inference(csv_path, muscle_col):
     # Average the overlapping windows for a smooth transition
     final_cleaned = output_buffer / np.maximum(count_mask, 1)
     
-    # 4. SCALE BACK TO ORIGINAL UNITS (mV)
+    # Scale back to original units (mV)
     # This puts the 0.02mV reflex back at its real amplitude
     final_cleaned_mv = final_cleaned * scale_factor
 
@@ -73,9 +74,9 @@ def run_inference(csv_path, muscle_col):
 
 
 if __name__ == "__main__":
-    participants_name = {"JK":{"BB_tSCS_before_BLT", "TB_tSCS_before_BLT", "AD_PD_tSCS_before_BLT", "BB_tSCS_after_BLT", "TB_tSCS_after_BLT", "AD_PD_tSCS_after_BLT"},
-                        "kevyn":{"BB_tSCS_before_BLT", "TB_tSCS_before_BLT", "AD_PD_tSCS_before_BLT", "BB_tSCS_after_BLT", "TB_tSCS_after_BLT", "AD_PD_tSCS_after_BLT"}}   
-    
+    participants_name = {"MJ":{"BB_tSCS_before_BLT", "TB_tSCS_before_BLT", "AD_PD_tSCS_before_BLT", "BB_tSCS_after_BLT", "TB_tSCS_after_BLT", "AD_PD_tSCS_after_BLT"},
+                        "kn":{"BB_tSCS_before_BLT", "TB_tSCS_before_BLT", "AD_PD_tSCS_before_BLT", "BB_tSCS_after_BLT", "TB_tSCS_after_BLT", "AD_PD_tSCS_after_BLT"}}   
+
     file_dir = Raw_data_path
     output_base = Cleaned_data_path
     muscle_names = ["1 L BB", "2 L TB", "3 L AD", "4 L PD", "5 R BB", "6 R TB", "7 R AD", "8 R PD"]
@@ -85,7 +86,7 @@ if __name__ == "__main__":
     settings = {"BB": (3.0, 10, 25), "TB": (3.0, 10, 25),
                 "AD": (8.0, 15, 40), "PD": (8.0, 15, 40)}
 
-    # 1. Configuration
+    # Configuration
     for participant in participants_name:
         
         part_out_dir = os.path.join(output_base, participant)
@@ -100,7 +101,7 @@ if __name__ == "__main__":
 
             print(f"Now opening: {current_file_path}")
 
-            # CORRECT initialization of an empty dictionary
+            # Correct initialization of an empty dictionary
             cleaned_only_results = {}
 
             df_orig = pd.read_csv(current_file_path)
@@ -125,30 +126,12 @@ if __name__ == "__main__":
                     result.update(participant=participant, condition=condition, muscle=muscle)
                     metric_rows.append(result)
 
-                    # 3. VISUALIZATION (Optional: shows a plot for every muscle processed)
-                    # plt.figure(figsize=(12, 6))
-                    # plt.subplot(2, 1, 1)
-                    # plt.plot(raw, color='deepskyblue', alpha=0.5, label='Raw Noisy Signal')
-                    # plt.plot(cleaned, color='black', label='U-Net Cleaned', linewidth=0.7)
-                    # plt.title(f"Cleaning Result: {muscle}")
-                    # plt.legend()
-
-                    # plt.subplot(2, 1, 2)
-                    # plt.plot(raw[-10000:], color='deepskyblue', alpha=0.5, label='Original Tail')
-                    # plt.plot(cleaned[-10000:], color='black', label='Cleaned Tail')
-                    # plt.title("Validation Check: 10s Clean Tail")
-                    # plt.legend()
-                    
-                    # plt.tight_layout()
-                    # plt.show() # Close the plot window to continue to the next muscle
-
                 if muscle in plot_muscles and condition in plot_conditions:
                     plotting_tool = EMGVisualizer()
                     plotting_tool.plot_inference_check(raw=raw, cleaned=cleaned, muscle_name=muscle)
                 
 
-
-            # 4. SAVE TO CSV
+            # Save to csv
             if cleaned_only_results:
                 final_df = pd.DataFrame(cleaned_only_results)
                 output_name = os.path.join(part_out_dir, f"{condition}_CLEANED.csv")

@@ -4,8 +4,6 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
 from scipy.signal import find_peaks
 from process import Process
 
@@ -53,21 +51,6 @@ class EMGdataset(Dataset):
     
     def __getitem__ (self, index):
         return self.all_noisy[index], self.all_clean[index]
-    
-def extract_pure_noise(signal, peak_indices, pre_width=10, post_width=35):
-
-    interpolated = signal.copy()
-    for p in peak_indices:
-        start = max(0, p - pre_width)
-        end = min(len(signal) - 1, p + post_width)
-        # Bridge over the spike
-        val_start = signal[start]
-        val_end = signal[end]
-        interpolated[start:end] = np.linspace(val_start, val_end, num=end-start)
-    
-    # Pure noise = Original minus the bridges
-    return signal - interpolated
-
 
 def pre_process_batched(raw_path, output_path, window_size=400):
 
@@ -190,35 +173,3 @@ def get_loader(processed_path, train_participants, val_participants, batch_size=
 #     raw = Raw_data_path
 #     processed = Processed_data_path
 #     pre_process_batched(raw, processed)
- 
-# def check_pt_file(file_path):
-#     # 1. Load the data
-#     # Your code saved them as: torch.save((torch.stack(n_list), torch.stack(c_list)), ...)
-#     noisy_windows, clean_windows = torch.load(file_path)
-
-#     # Print the Shapes
-#     # Expected: [Number of Windows, 1, 400]
-#     print(f"--- Metadata for: {file_path} ---")
-#     print(f"Noisy Tensor Shape: {noisy_windows.shape}")
-#     print(f"Clean Tensor Shape: {clean_windows.shape}")
-
-#     # Print the Value Ranges
-#     # This ensures your normalization worked
-#     print(f"Noisy Max: {noisy_windows.max().item():.4f} | Noisy Min: {noisy_windows.min().item():.4f}")
-#     print(f"Clean Max: {clean_windows.max().item():.4f} | Clean Min: {clean_windows.min().item():.4f}")
-
-#     # Visual Check: Plot one specific window (e.g., window #10)
-#     window_idx = 10
-#     plt.figure(figsize=(12, 5))
-    
-#     # We use [window_idx, 0, :] to get the 400 samples
-#     input_data = noisy_windows[window_idx, 0, :].numpy()
-#     target_data = clean_windows[window_idx, 0, :].numpy()
-
-#     plt.plot(input_data, label='Input (Synthetic Noisy)', color='crimson', alpha=0.8)
-#     plt.plot(target_data, label='Target (Original Clean)', color='steelblue', alpha=0.8)
-    
-#     plt.title(f"Verification of Window {window_idx}")
-#     plt.legend()
-#     plt.grid(True, alpha=0.3)
-#     plt.show()
