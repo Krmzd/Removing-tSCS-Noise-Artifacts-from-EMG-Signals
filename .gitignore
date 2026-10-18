@@ -215,3 +215,4 @@ cleaned_data/
 *.CSV
 *.pt
 *.pth
+.DS_Store
