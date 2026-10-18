@@ -9,7 +9,7 @@ load_dotenv()
 # Folder that contains this file (the Attention-U-Net project)
 Base_dir = Path(__file__).resolve().parent
 # Folder above it ("U-net CNN"), where data/ and processed_data/ live
-Root_dir = Base_dir.parent
+Root_dir = Base_dir
 
 # Paths: set them in .env, otherwise these defaults are used
 Raw_data_path = Path(os.getenv("RAW_DATA_PATH", Root_dir / "data"))
