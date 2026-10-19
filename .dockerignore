@@ -1,0 +1,12 @@
+.git
+.env
+.venv
+.venv-1
+__pycache__
+.DS_Store
+data
+processed_data
+cleaned_data
+validation_results
+figures
+docker_output

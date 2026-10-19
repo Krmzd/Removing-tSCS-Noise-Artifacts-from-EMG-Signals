@@ -216,3 +216,5 @@ cleaned_data/
 *.pt
 *.pth
 .DS_Store
+
+docker_output/
