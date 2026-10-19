@@ -82,7 +82,7 @@ if __name__ == "__main__":
         
         for condition in condition_name:
             
-            noisy_path = f"{file_dir}/{participant}/{condition}.CSV"
+            noisy_path = f"{file_dir}/{participant}/{condition}.csv"
 
             # correct initialization of an empty dictionary
             cleaned_only_results = {}

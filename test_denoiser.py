@@ -97,7 +97,7 @@ if __name__ == "__main__":
         
         for condition in condition_name:
 
-            current_file_path = f"{file_dir}/{participant}/{condition}.CSV"
+            current_file_path = f"{file_dir}/{participant}/{condition}.csv"
 
             print(f"Now opening: {current_file_path}")
 
