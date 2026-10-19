@@ -103,3 +103,13 @@ python test_denoiser.py        # real-recording evaluation and cleaned CSV expor
 ```
 
 Data and trained weights are not included in this repository.
+
+
+## Run with Docker
+
+Build the image: `docker build -t emg-denoiser .`
+
+Run the denoiser (raw data goes in `data/<participant>/<condition>.csv`):
+`docker run --rm -v "$(pwd)/data:/app/data:ro" -v "$(pwd)/docker_output:/app/cleaned_data" emg-denoiser`
+
+Cleaned signals and `real_metrics.csv` are saved in `docker_output/`.
