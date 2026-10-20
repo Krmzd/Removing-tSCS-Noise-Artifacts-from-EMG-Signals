@@ -1,6 +1,6 @@
 # Attention U-Net for EMG Denoising
 Removing tSCS artifacts from EMG to clarify cutaneous reflexes
-
+![CI/CD](https://github.com/Krmzd/Removing-tSCS-Noise-Artifacts-from-EMG-Signals/actions/workflows/tests.yml/badge.svg)
 ## Project Overview
 During transcutaneous spinal cord stimulation (tSCS), large stimulation artifacts hide the EMG signal of interest. This project trains a 1D Attention U-Net to remove tSCS artifacts while preserving the underlying muscle activity.
 
@@ -113,3 +113,49 @@ Run the denoiser (raw data goes in `data/<participant>/<condition>.csv`):
 `docker run --rm -v "$(pwd)/data:/app/data:ro" -v "$(pwd)/docker_output:/app/cleaned_data" emg-denoiser`
 
 Cleaned signals and `real_metrics.csv` are saved in `docker_output/`.
+### Run the API with Docker
+
+```
+docker run --rm -p 127.0.0.1:8000:8000 emg-denoiser uvicorn api:app --host 0.0.0.0 --port 8000
+```
+Then open http://127.0.0.1:8000/docs
+
+### Prebuilt image
+
+Every push to `main` builds the image and publishes it to GitHub Container Registry.
+The published image does **not** include the trained weights; mount your own copy:
+```
+docker pull ghcr.io/krmzd/emg-denoiser:latest
+docker run --rm -p 127.0.0.1:8000:8000 \
+  -v "$(pwd)/unet_denoiser.pth:/app/unet_denoiser.pth:ro" \
+  ghcr.io/krmzd/emg-denoiser:latest \
+  uvicorn api:app --host 0.0.0.0 --port 8000
+```
+On Apple Silicon Macs, add `--platform linux/amd64` after `docker run` and `docker pull`.
+
+## REST API (FastAPI)
+
+Start the API locally:
+```
+pip install -r requirements.txt
+uvicorn api:app --reload
+```
+
+| Method | URL | Description |
+|---|---|---|
+| GET | `/health` | Check that the API is running |
+| GET | `/info` | Model information |
+| POST | `/denoise` | Send `{"signal": [...]}` (at least 400 samples), get back `{"cleaned": [...]}` |
+
+Interactive documentation: http://127.0.0.1:8000/docs
+Example client: `python try_api.py`
+
+## Tests and CI/CD
+
+Run the unit tests:
+```
+pip install pytest
+pytest
+```
+GitHub Actions runs the tests on every push and pull request.
+When the tests pass on `main`, it builds the Docker image and publishes it to `ghcr.io`.
